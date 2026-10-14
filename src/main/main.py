@@ -55,52 +55,65 @@ def main():
 def load_and_clean_users(file_path):
     with open(file_path, 'r', newline='', encoding='utf-8') as file:
         reader = csv.reader(file)
-        next(reader, None)  # skip header
+        next(reader, None)
+
         for row in reader:
-            # Correct number of fields (3) and no empty values
-            if len(row) != 3:
+            if len(row) != 2:
                 continue
+
             if not all(field.strip() for field in row):
                 continue
-            try:
-                user_id = int(row[0].strip())
-                first_name = row[1].strip()
-                last_name = row[2].strip()
-            except (ValueError, TypeError):
-                continue
+
+            first_name = row[0].strip()
+            last_name = row[1].strip()
+
             cursor.execute(
-                '''INSERT OR IGNORE INTO users (userId, firstName, lastName)
-                   VALUES (?, ?, ?)''',
-                (user_id, first_name, last_name)
+                '''
+                INSERT INTO users (firstName, lastName)
+                VALUES (?, ?)
+                ''',
+                (first_name, last_name)
             )
+
     conn.commit()
 
 # This function will load the callLogs.csv file into the callLogs table, discarding any records with incomplete data
 def load_and_clean_call_logs(file_path):
     with open(file_path, 'r', newline='', encoding='utf-8') as file:
         reader = csv.reader(file)
-        next(reader, None)  # skip header
+        next(reader, None)
+
         for row in reader:
-            # Correct number of fields (6) and no empty values
-            if len(row) != 6:
+            if len(row) != 5:
                 continue
+
             if not all(field.strip() for field in row):
                 continue
+
             try:
-                call_id = int(row[0].strip())
-                phone_number = row[1].strip()
-                start_time = int(row[2].strip())
-                end_time = int(row[3].strip())
-                direction = row[4].strip()
-                user_id = int(row[5].strip())
+                phone_number = row[0].strip()
+                start_time = int(row[1].strip())
+                end_time = int(row[2].strip())
+                direction = row[3].strip()
+                user_id = int(row[4].strip())
             except (ValueError, TypeError):
                 continue
+
             cursor.execute(
-                '''INSERT OR IGNORE INTO callLogs
-                   (callId, phoneNumber, startTime, endTime, direction, userId)
-                   VALUES (?, ?, ?, ?, ?, ?)''',
-                (call_id, phone_number, start_time, end_time, direction, user_id)
+                '''
+                INSERT INTO callLogs
+                (phoneNumber, startTime, endTime, direction, userId)
+                VALUES (?, ?, ?, ?, ?)
+                ''',
+                (
+                    phone_number,
+                    start_time,
+                    end_time,
+                    direction,
+                    user_id
+                )
             )
+
     conn.commit()
 
 # This function will write analytics data to testUserAnalytics.csv - average call time, and number of calls per user.
