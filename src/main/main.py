@@ -53,30 +53,102 @@ def main():
 
 # This function will load the users.csv file into the users table, discarding any records with incomplete data
 def load_and_clean_users(file_path):
-
-    print("TODO: load_users")
-
+    with open(file_path, 'r', newline='', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        for row in reader:
+            required_fields = ('userId', 'firstName', 'lastName')
+            if not all(
+                row.get(field) is not None and row[field].strip()
+                for field in required_fields
+            ):
+                continue
+            try:
+                user_id = int(row['userId'].strip())
+                first_name = row['firstName'].strip()
+                last_name = row['lastName'].strip()
+            except (ValueError, TypeError):
+                continue
+            cursor.execute(
+                '''INSERT OR IGNORE INTO users (userId, firstName, lastName)
+                   VALUES (?, ?, ?)''',
+                (user_id, first_name, last_name)
+            )
+    conn.commit()
 
 # This function will load the callLogs.csv file into the callLogs table, discarding any records with incomplete data
 def load_and_clean_call_logs(file_path):
-
-    print("TODO: load_call_logs")
-
+    with open(file_path, 'r', newline='', encoding='utf-8') as file:
+        reader = csv.DictReader(file)
+        required_fields = (
+            'callId', 'phoneNumber', 'startTime',
+            'endTime', 'direction', 'userId'
+        )
+        for row in reader:
+            if not all(
+                row.get(field) is not None and row[field].strip()
+                for field in required_fields
+            ):
+                continue
+            try:
+                call_id = int(row['callId'].strip())
+                phone_number = row['phoneNumber'].strip()
+                start_time = int(row['startTime'].strip())
+                end_time = int(row['endTime'].strip())
+                direction = row['direction'].strip()
+                user_id = int(row['userId'].strip())
+            except (ValueError, TypeError):
+                continue
+            cursor.execute(
+                '''INSERT OR IGNORE INTO callLogs
+                   (callId, phoneNumber, startTime, endTime, direction, userId)
+                   VALUES (?, ?, ?, ?, ?, ?)''',
+                (call_id, phone_number, start_time, end_time, direction, user_id)
+            )
+    conn.commit()
 
 # This function will write analytics data to testUserAnalytics.csv - average call time, and number of calls per user.
 # You must save records consisting of each userId, avgDuration, and numCalls
 # example: 1,105.0,4 - where 1 is the userId, 105.0 is the avgDuration, and 4 is the numCalls.
 def write_user_analytics(csv_file_path):
+    cursor.execute('''
+        SELECT
+            userId,
+            AVG(endTime - startTime) AS avgDuration,
+            COUNT(*) AS numCalls
+        FROM callLogs
+        GROUP BY userId
+        ORDER BY userId
+    ''')
+    rows = cursor.fetchall()
 
-    print("TODO: write_user_analytics")
-
+    with open(csv_file_path, 'w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow(['userId', 'avgDuration', 'numCalls'])
+        writer.writerows(rows)
 
 # This function will write the callLogs ordered by userId, then start time.
 # Then, write the ordered callLogs to orderedCalls.csv
 def write_ordered_calls(csv_file_path):
+    cursor.execute('''
+        SELECT
+            callId,
+            phoneNumber,
+            startTime,
+            endTime,
+            direction,
+            userId
+        FROM callLogs
+        ORDER BY userId ASC, startTime ASC
+    ''')
+    rows = cursor.fetchall()
 
-    print("TODO: write_ordered_calls")
-
+    with open(csv_file_path, 'w', newline='', encoding='utf-8') as file:
+        writer = csv.writer(file)
+        writer.writerow([
+            'callId', 'phoneNumber', 'startTime',
+            'endTime', 'direction', 'userId'
+        ])
+        writer.writerows(rows)
 
 
 # No need to touch the functions below!------------------------------------------
