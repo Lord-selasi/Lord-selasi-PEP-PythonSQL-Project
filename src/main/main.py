@@ -54,18 +54,18 @@ def main():
 # This function will load the users.csv file into the users table, discarding any records with incomplete data
 def load_and_clean_users(file_path):
     with open(file_path, 'r', newline='', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
+        reader = csv.reader(file)
+        next(reader, None)  # skip header
         for row in reader:
-            required_fields = ('userId', 'firstName', 'lastName')
-            if not all(
-                row.get(field) is not None and row[field].strip()
-                for field in required_fields
-            ):
+            # Correct number of fields (3) and no empty values
+            if len(row) != 3:
+                continue
+            if not all(field.strip() for field in row):
                 continue
             try:
-                user_id = int(row['userId'].strip())
-                first_name = row['firstName'].strip()
-                last_name = row['lastName'].strip()
+                user_id = int(row[0].strip())
+                first_name = row[1].strip()
+                last_name = row[2].strip()
             except (ValueError, TypeError):
                 continue
             cursor.execute(
@@ -78,24 +78,21 @@ def load_and_clean_users(file_path):
 # This function will load the callLogs.csv file into the callLogs table, discarding any records with incomplete data
 def load_and_clean_call_logs(file_path):
     with open(file_path, 'r', newline='', encoding='utf-8') as file:
-        reader = csv.DictReader(file)
-        required_fields = (
-            'callId', 'phoneNumber', 'startTime',
-            'endTime', 'direction', 'userId'
-        )
+        reader = csv.reader(file)
+        next(reader, None)  # skip header
         for row in reader:
-            if not all(
-                row.get(field) is not None and row[field].strip()
-                for field in required_fields
-            ):
+            # Correct number of fields (6) and no empty values
+            if len(row) != 6:
+                continue
+            if not all(field.strip() for field in row):
                 continue
             try:
-                call_id = int(row['callId'].strip())
-                phone_number = row['phoneNumber'].strip()
-                start_time = int(row['startTime'].strip())
-                end_time = int(row['endTime'].strip())
-                direction = row['direction'].strip()
-                user_id = int(row['userId'].strip())
+                call_id = int(row[0].strip())
+                phone_number = row[1].strip()
+                start_time = int(row[2].strip())
+                end_time = int(row[3].strip())
+                direction = row[4].strip()
+                user_id = int(row[5].strip())
             except (ValueError, TypeError):
                 continue
             cursor.execute(
